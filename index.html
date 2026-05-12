@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>✦ webb.ino </title>
+<link rel="icon" type="image/jpeg" href="C:\Users\AARAV\OneDrive\Documents\Desktop\web\DM web\WhatsApp Image 2026-05-11 at 4.29.18 PM.png">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Syne:wght@400;600;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #f0d080;
+    --gold-glow: rgba(201,168,76,0.4);
+    --bg: #080808;
+    --bg2: #0e0e0e;
+    --bg3: #111;
+    --white: #f5f0e8;
+    --muted: #6b6560;
+    --red: #ff3b3b;
+    --green: #00e87a;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* LOADING SCREEN */
+  #loader {
+    position: fixed; inset: 0;
+    background: #000;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999;
+    flex-direction: column;
+    gap: 20px;
+    transition: opacity 0.8s ease, visibility 0.8s ease;
+  }
+  #loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+  .loader-ring {
+    width: 60px; height: 60px;
+    border: 2px solid #222;
+    border-top: 2px solid var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  .loader-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* REEL CONTAINER */
+  .reel {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* SCENE BASE */
+  .scene {
+    width: 100%;
+    min-height: 100vh;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 60px clamp(24px, 8vw, 120px);
+  }
+
+  /* SCENE 1 - OPENING HOOK */
+  .scene-1 {
+    background: #000;
+    min-height: 100svh;
+  }
+  .scene-1-noise {
+    position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.5;
+  }
+  .pov-badge {
+    background: var(--red);
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 2px;
+    margin-bottom: 28px;
+    animation: pulseBadge 1.5s ease infinite;
+    position: relative; z-index: 2;
+  }
+  @keyframes pulseBadge {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+  .hook-text {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 8vw, 42px);
+    font-weight: 900;
+    line-height: 1.15;
+    text-align: center;
+    color: var(--white);
+    position: relative; z-index: 2;
+    animation: fadeUp 0.8s ease 0.3s both;
+  }
+  .hook-text span {
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hook-sub {
+    margin-top: 20px;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-align: center;
+    position: relative; z-index: 2;
+    animation: fadeUp 0.8s ease 0.6s both;
+  }
+  .scene-1-bg {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 60%, rgba(201,168,76,0.06) 0%, transparent 70%);
+  }
+  .scroll-indicator {
+    position: absolute; bottom: 32px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    z-index: 2;
+    animation: fadeUp 1s ease 1.2s both;
+  }
+  .scroll-indicator span { font-size: 10px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; }
+  .scroll-arrow {
+    width: 1px; height: 40px;
+    background: linear-gradient(to bottom, var(--gold), transparent);
+    animation: scrollPulse 1.5s ease infinite;
+  }
+  @keyframes scrollPulse {
+    0% { transform: scaleY(1); opacity: 1; }
+    100% { transform: scaleY(0.3); opacity: 0; }
+  }
+
+  /* SCENE 2 - OLD BORING BUSINESS */
+  .scene-2 { background: #0a0a0a; }
+  .section-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 9px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+  .old-profile-card {
+    width: 100%;
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 20px;
+    position: relative;
+    animation: glitch 4s ease infinite;
+  }
+  @keyframes glitch {
+    0%,90%,100% { transform: none; filter: none; }
+    92% { transform: translate(-2px, 0); filter: hue-rotate(90deg); }
+    94% { transform: translate(2px, 1px); }
+    96% { transform: translate(-1px, -1px); filter: hue-rotate(0deg); }
+  }
+  .old-badge {
+    position: absolute; top: -10px; left: 16px;
+    background: #2a2a2a; border: 1px solid #333;
+    font-size: 9px; letter-spacing: 2px; color: var(--muted);
+    padding: 3px 10px; border-radius: 2px; text-transform: uppercase;
+  }
+  .old-profile-top { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .old-avatar {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: #2a2a2a;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    border: 2px solid #333;
+  }
+  .old-name { font-size: 14px; color: #777; font-weight: 500; }
+  .old-handle { font-size: 11px; color: #444; margin-top: 2px; }
+  .old-bio { font-size: 12px; color: #555; line-height: 1.5; margin-bottom: 14px; }
+  .old-stats { display: flex; gap: 16px; }
+  .old-stat { text-align: center; }
+  .old-stat-num { font-size: 16px; color: #555; font-weight: 700; }
+  .old-stat-label { font-size: 9px; color: #3a3a3a; text-transform: uppercase; letter-spacing: 1px; }
+  .old-cta {
+    width: 100%; margin-top: 14px;
+    background: #222; border: 1px solid #333; border-radius: 4px;
+    padding: 10px; font-size: 12px; color: #555;
+    text-align: center; cursor: not-allowed;
+  }
+  .loss-indicators {
+    display: flex; flex-direction: column; gap: 10px;
+    margin-top: 20px; width: 100%;
+  }
+  .loss-bar {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .loss-label { font-size: 10px; color: var(--muted); width: 100px; flex-shrink: 0; letter-spacing: 0.5px; }
+  .loss-track { flex: 1; height: 4px; background: #1f1f1f; border-radius: 2px; overflow: hidden; }
+  .loss-fill {
+    height: 100%; border-radius: 2px;
+    background: var(--red);
+    animation: lossGrow 2s ease 0.5s both;
+  }
+  .loss-pct { font-size: 10px; color: var(--red); font-weight: 700; width: 32px; text-align: right; }
+  @keyframes lossGrow { from { width: 0; } }
+
+  /* SCENE 3 - CUSTOMERS LEAVING */
+  .scene-3 { background: #050505; min-height: 80vh; }
+  .customers-wrap { width: 100%; position: relative; }
+  .customer-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0; border-bottom: 1px solid #111;
+    animation: swipeLeft 1s ease both;
+  }
+  .customer-row:nth-child(1) { animation-delay: 0.1s; }
+  .customer-row:nth-child(2) { animation-delay: 0.3s; }
+  .customer-row:nth-child(3) { animation-delay: 0.5s; }
+  .customer-row:nth-child(4) { animation-delay: 0.7s; }
+  @keyframes swipeLeft {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(-30px); opacity: 0.3; }
+  }
+  .c-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .c-info { flex: 1; }
+  .c-name { font-size: 12px; color: #666; }
+  .c-action { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .c-gone { font-size: 10px; color: var(--red); }
+  .loss-total {
+    margin-top: 24px; text-align: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 36px; font-weight: 900; color: var(--red);
+    animation: fadeUp 0.8s ease both;
+  }
+  .loss-total-label { font-size: 11px; color: var(--muted); letter-spacing: 2px; margin-top: 4px; text-transform: uppercase; }
+
+  /* SCENE 4 - TRANSITION */
+  .scene-4 {
+    min-height: 60vh;
+    background: linear-gradient(180deg, #050505 0%, #0a0800 50%, #0d0b00 100%);
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  .transition-ring {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    border: 1px solid rgba(201,168,76,0.2);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 28px;
+    position: relative;
+    animation: ringPulse 2s ease infinite;
+  }
+  @keyframes ringPulse {
+    0%,100% { box-shadow: 0 0 0 0 var(--gold-glow); }
+    50% { box-shadow: 0 0 40px 10px var(--gold-glow); }
+  }
+  .transition-ring::before {
+    content: '';
+    position: absolute; inset: -8px;
+    border-radius: 50%;
+    border: 1px solid rgba(201,168,76,0.1);
+    animation: ringPulse 2s ease 0.5s infinite;
+  }
+  .transition-icon { font-size: 40px; }
+  .transition-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px; letter-spacing: 3px; color: var(--gold);
+    text-transform: uppercase; margin-bottom: 12px;
+  }
+  .transition-headline {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px; font-weight: 900; line-height: 1.2;
+    color: var(--white);
+  }
+
+  /* SCENE 5 - PREMIUM WEBSITE PREVIEW */
+  .scene-5 { background: var(--bg2); padding-bottom: 60px; }
+  .phone-mockup {
+    width: clamp(200px, 30vw, 320px);
+    background: #111;
+    border-radius: 36px;
+    padding: 12px;
+    border: 1px solid #2a2a2a;
+    box-shadow:
+      0 0 0 1px #1a1a1a,
+      0 0 60px rgba(201,168,76,0.15),
+      0 40px 80px rgba(0,0,0,0.8);
+    margin: 0 auto;
+    animation: floatPhone 3s ease infinite;
+    position: relative;
+  }
+  @keyframes floatPhone {
+    0%,100% { transform: translateY(0) rotate(-1deg); }
+    50% { transform: translateY(-12px) rotate(1deg); }
+  }
+  .phone-notch {
+    width: 60px; height: 8px;
+    background: #000; border-radius: 4px;
+    margin: 0 auto 8px;
+  }
+  .phone-screen {
+    background: linear-gradient(160deg, #0d0a00 0%, #1a1200 100%);
+    border-radius: 28px;
+    overflow: hidden;
+    height: clamp(340px, 50vw, 520px);
+    position: relative;
+  }
+  .phone-hero {
+    background: linear-gradient(135deg, #1a1200, #0d0900);
+    padding: 20px 14px 16px;
+    text-align: center;
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+    position: relative;
+    overflow: hidden;
+  }
+  .phone-hero::before {
+    content: '';
+    position: absolute; top: -30px; left: 50%;
+    transform: translateX(-50%);
+    width: 120px; height: 120px;
+    background: radial-gradient(circle, rgba(201,168,76,0.15) 0%, transparent 70%);
+  }
+  .phone-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 14px; font-weight: 900; color: var(--gold);
+    letter-spacing: 1px; margin-bottom: 4px;
+    position: relative; z-index: 1;
+  }
+  .phone-tagline { font-size: 7px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; position: relative; z-index: 1; }
+  .phone-cta-btn {
+    margin-top: 10px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    border: none; border-radius: 3px;
+    padding: 6px 14px;
+    font-size: 8px; font-weight: 700; color: #000;
+    letter-spacing: 1px; text-transform: uppercase;
+    cursor: pointer; position: relative; z-index: 1;
+    box-shadow: 0 4px 16px rgba(201,168,76,0.4);
+  }
+  .phone-services { padding: 10px 10px; }
+  .phone-services-title { font-size: 7px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+  .phone-service-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+  .phone-service-item {
+    background: rgba(201,168,76,0.05);
+    border: 1px solid rgba(201,168,76,0.1);
+    border-radius: 6px; padding: 8px 6px;
+    text-align: center;
+  }
+  .phone-service-icon { font-size: 14px; margin-bottom: 3px; }
+  .phone-service-name { font-size: 6.5px; color: var(--white); }
+  .phone-bottom-nav {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(10,8,0,0.95);
+    border-top: 1px solid rgba(201,168,76,0.1);
+    padding: 8px 16px;
+    display: flex; justify-content: space-around;
+  }
+  .phone-nav-item { font-size: 7px; color: var(--muted); text-align: center; }
+  .phone-nav-item.active { color: var(--gold); }
+  .phone-nav-icon { font-size: 12px; }
+
+  .feature-tags {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    justify-content: center; margin-top: 24px;
+  }
+  .ftag {
+    background: rgba(201,168,76,0.08);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 10px; color: var(--gold);
+    letter-spacing: 0.5px;
+  }
+
+  /* SCENE 6 - BOOKINGS INCREASING */
+  .scene-6 { background: #060606; }
+  .bookings-header { text-align: center; margin-bottom: 28px; }
+  .bookings-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(22px, 3vw, 36px); font-weight: 900; line-height: 1.2;
+  }
+  .bookings-header h2 span { color: var(--gold); }
+  .metric-cards {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    width: 100%;
+    max-width: 900px;
+  }
+  .metric-card {
+    background: linear-gradient(135deg, rgba(201,168,76,0.06) 0%, rgba(201,168,76,0.02) 100%);
+    border: 1px solid rgba(201,168,76,0.12);
+    border-radius: 12px; padding: 16px 20px;
+    display: flex; align-items: center; gap: 16px;
+    position: relative; overflow: hidden;
+  }
+  .metric-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .metric-icon { font-size: 24px; flex-shrink: 0; }
+  .metric-info { flex: 1; }
+  .metric-label { font-size: clamp(10px, 1.2vw, 13px); color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+  .metric-value { font-family: 'Syne', sans-serif; font-size: clamp(24px, 3vw, 36px); font-weight: 800; color: var(--green); }
+  .metric-value.gold { color: var(--gold); }
+  .metric-change { font-size: 10px; color: var(--green); margin-top: 2px; }
+  .metric-bar-wrap { flex-shrink: 0; width: 60px; }
+  .mini-bars { display: flex; align-items: flex-end; gap: 3px; height: 36px; }
+  .mini-bar {
+    flex: 1; border-radius: 2px;
+    background: linear-gradient(to top, var(--gold), var(--gold-light));
+    animation: barGrow 0.6s ease both;
+  }
+  @keyframes barGrow { from { transform: scaleY(0); transform-origin: bottom; } }
+
+  /* SCENE 7 - SOCIAL PROOF */
+  .scene-7 { background: #080808; }
+  .social-proof-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(22px, 3vw, 38px); font-weight: 900; text-align: center;
+    margin-bottom: 24px; line-height: 1.2;
+  }
+  .social-proof-title span { color: var(--gold); }
+  .testimonial-stack {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    width: 100%;
+    max-width: 900px;
+  }
+  .testimonial-card {
+    background: #0e0e0e;
+    border: 1px solid #1e1e1e;
+    border-radius: 12px; padding: 16px;
+    position: relative; overflow: hidden;
+    transition: border-color 0.3s;
+  }
+  .testimonial-card:hover { border-color: rgba(201,168,76,0.3); }
+  .testimonial-card::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .testimonial-card:hover::after { opacity: 1; }
+  .t-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .t-avatar { width: 36px; height: 36px; border-radius: 50%; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+  .t-name { font-size: clamp(12px, 1.5vw, 15px); font-weight: 600; }
+  .t-handle { font-size: clamp(10px, 1.2vw, 12px); color: var(--muted); }
+  .t-stars { color: var(--gold); font-size: clamp(11px, 1.4vw, 14px); margin-bottom: 6px; letter-spacing: 1px; }
+  .t-text { font-size: clamp(11px, 1.4vw, 14px); color: #aaa; line-height: 1.6; }
+  .t-verified { display: flex; align-items: center; gap: 4px; margin-top: 8px; font-size: clamp(9px, 1.1vw, 11px); color: var(--gold); }
+
+  /* SCENE 8 - MOBILE RESPONSIVE */
+  .scene-8 { background: var(--bg2); }
+  .responsive-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(22px, 3vw, 38px); font-weight: 900; text-align: center; margin-bottom: 8px;
+  }
+  .responsive-sub { font-size: clamp(11px, 1.3vw, 14px); color: var(--muted); text-align: center; margin-bottom: 28px; letter-spacing: 1px; }
+  .device-showcase {
+    display: flex; align-items: flex-end; justify-content: center;
+    gap: clamp(12px, 3vw, 40px); width: 100%; max-width: 800px;
+  }
+  .device { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .device-frame {
+    background: #111; border: 1px solid #2a2a2a; border-radius: 12px;
+    overflow: hidden; position: relative;
+  }
+  .device-frame.mobile { width: clamp(60px, 10vw, 100px); height: clamp(120px, 18vw, 190px); border-radius: 14px; }
+  .device-frame.tablet { width: clamp(100px, 16vw, 180px); height: clamp(140px, 22vw, 240px); border-radius: 10px; }
+  .device-frame.desktop { width: clamp(150px, 24vw, 320px); height: clamp(100px, 16vw, 210px); border-radius: 6px; }
+  .device-inner { width: 100%; height: 100%; background: linear-gradient(160deg, #0d0a00, #1a1200); padding: 6px; }
+  .d-header { height: 16px; background: rgba(201,168,76,0.15); border-radius: 3px; margin-bottom: 4px; }
+  .d-content { display: flex; flex-direction: column; gap: 3px; }
+  .d-line { height: 4px; background: #222; border-radius: 2px; }
+  .d-line.gold { background: rgba(201,168,76,0.3); width: 60%; }
+  .d-line.short { width: 45%; }
+  .d-btn { height: 12px; background: linear-gradient(90deg, var(--gold), var(--gold-light)); border-radius: 2px; margin-top: 4px; width: 50%; }
+  .device-label { font-size: 9px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; }
+  .responsive-check { margin-top: 20px; font-size: 11px; color: var(--green); text-align: center; }
+  .responsive-check span { margin-right: 6px; }
+
+  /* SCENE 9 - FINAL CTA */
+  .scene-9 {
+    min-height: 100vh;
+    background: #000;
+    position: relative; overflow: hidden;
+    justify-content: center; text-align: center;
+  }
+  .final-bg-orb {
+    position: absolute;
+    width: 300px; height: 300px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,168,76,0.12) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    animation: orbPulse 3s ease infinite;
+  }
+  @keyframes orbPulse {
+    0%,100% { transform: translate(-50%,-50%) scale(1); }
+    50% { transform: translate(-50%,-50%) scale(1.2); }
+  }
+  .final-bg-orb-2 {
+    position: absolute;
+    width: 500px; height: 500px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,168,76,0.04) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    animation: orbPulse 4s ease 1s infinite;
+  }
+  .final-eyebrow {
+    font-family: 'Syne', sans-serif;
+    font-size: 9px; letter-spacing: 5px; color: var(--gold);
+    text-transform: uppercase; margin-bottom: 20px;
+    position: relative; z-index: 2;
+  }
+  .final-headline {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(32px, 9vw, 48px); font-weight: 900;
+    line-height: 1.1; margin-bottom: 8px;
+    position: relative; z-index: 2;
+  }
+  .final-headline span {
+    background: linear-gradient(135deg, var(--gold), var(--gold-light), var(--gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    background-size: 200% 200%;
+    animation: goldShimmer 3s ease infinite;
+  }
+  @keyframes goldShimmer {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  .final-sub {
+    font-size: 13px; color: var(--muted); margin-bottom: 40px;
+    position: relative; z-index: 2; line-height: 1.6;
+  }
+  .cta-btn {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
+    background-size: 200% 200%;
+    color: #000;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px; font-weight: 800;
+    letter-spacing: 2px; text-transform: uppercase;
+    text-decoration: none;
+    padding: 18px 36px; border-radius: 4px;
+    border: none; cursor: pointer;
+    position: relative; z-index: 2;
+    animation: goldShimmer 2s ease infinite;
+    box-shadow:
+      0 0 30px rgba(201,168,76,0.4),
+      0 0 60px rgba(201,168,76,0.1),
+      inset 0 1px 0 rgba(255,255,255,0.3);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .cta-btn:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow:
+      0 0 50px rgba(201,168,76,0.6),
+      0 0 100px rgba(201,168,76,0.2),
+      inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+  .cta-btn:active { transform: translateY(0) scale(0.98); }
+  .cta-note { margin-top: 16px; font-size: 10px; color: var(--muted); letter-spacing: 1px; position: relative; z-index: 2; }
+  .final-divider {
+    width: 40px; height: 1px;
+    background: rgba(201,168,76,0.3);
+    margin: 36px auto;
+    position: relative; z-index: 2;
+  }
+  .social-icons {
+    display: flex; gap: 16px; justify-content: center;
+    position: relative; z-index: 2;
+  }
+  .social-icon {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(201,168,76,0.06);
+    border: 1px solid rgba(201,168,76,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; cursor: pointer;
+    transition: all 0.3s;
+  }
+  .social-icon:hover {
+    background: rgba(201,168,76,0.15);
+    border-color: var(--gold);
+    box-shadow: 0 0 20px rgba(201,168,76,0.2);
+    transform: translateY(-2px);
+  }
+
+  /* GLOBALS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .reveal {
+    opacity: 0; transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* DIVIDER BETWEEN SCENES */
+  .scene-divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #1e1e1e, transparent);
+  }
+
+  /* COUNTER ANIMATION */
+  .counter { display: inline-block; }
+
+  /* GRAIN OVERLAY */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)'/%3E%3C/svg%3E");
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    position: fixed; top: 0; left: 0; height: 2px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light));
+    z-index: 1000;
+    transition: width 0.1s;
+    box-shadow: 0 0 8px var(--gold-glow);
+  }
+
+  /* Floating label */
+  .floating-scene-tag {
+    position: fixed; top: 20px; right: 20px;
+    font-family: 'Syne', sans-serif;
+    font-size: 9px; letter-spacing: 3px;
+    text-transform: uppercase; color: var(--muted);
+    z-index: 500;
+    background: rgba(8,8,8,0.8);
+    padding: 6px 12px; border-radius: 20px;
+    border: 1px solid #1e1e1e;
+    backdrop-filter: blur(10px);
+  }
+
+  /* BRAND LOGO - TOP LEFT */
+  .brand-logo-fixed {
+    position: fixed;
+    top: 16px;
+    left: 20px;
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    z-index: 500;
+    background-color: rgba(8,8,8,0.8);
+    padding: 5px 0;
+  }
+
+  /* BRAND FOOTER - BOTTOM OF LAST SCENE */
+  .brand-footer {
+    margin-top: 40px;
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 9vw, 48px);
+    font-weight: 900;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light), var(--gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    background-size: 200% 200%;
+    animation: goldShimmer 3s ease infinite;
+    position: relative;
+    z-index: 2;
+    text-align: center;
+  }
+
+  /* ── RESPONSIVE BREAKPOINTS ── */
+
+  /* Tablet: 600px–1023px */
+  @media (min-width: 600px) {
+    .metric-cards { grid-template-columns: 1fr 1fr; }
+    .testimonial-stack { grid-template-columns: 1fr 1fr; }
+    .loss-indicators { max-width: 520px; }
+    .old-profile-card { max-width: 480px; }
+    .customers-wrap { max-width: 480px; }
+    .feature-tags { max-width: 520px; }
+    .hook-sub { font-size: 15px; }
+    .section-label { font-size: 11px; }
+    .ftag { font-size: 12px; padding: 7px 16px; }
+  }
+
+  /* Desktop: 1024px+ */
+  @media (min-width: 1024px) {
+    .scene { padding: 80px clamp(60px, 10vw, 180px); }
+    .metric-cards { grid-template-columns: repeat(3, 1fr); max-width: 1100px; }
+    .testimonial-stack { grid-template-columns: repeat(3, 1fr); max-width: 1100px; }
+    .loss-indicators { max-width: 640px; }
+    .old-profile-card { max-width: 560px; }
+    .customers-wrap { max-width: 600px; }
+    .scene-3 { min-height: 70vh; }
+    .scene-4 { min-height: 50vh; }
+    .phone-mockup { width: clamp(260px, 22vw, 340px); }
+    .feature-tags { max-width: 680px; }
+    .final-sub { font-size: 16px; max-width: 480px; }
+    .cta-btn { font-size: 15px; padding: 20px 48px; }
+    .dm-panel { max-width: 560px; }
+    .brand-logo-fixed { font-size: 18px; }
+    .social-proof-title { font-size: clamp(28px, 3vw, 44px); }
+  }
+
+  /* Large desktop: 1440px+ */
+  @media (min-width: 1440px) {
+    .scene { padding: 100px clamp(80px, 12vw, 260px); }
+    .metric-cards { max-width: 1300px; }
+    .testimonial-stack { max-width: 1300px; }
+  }
+
+  /* Mobile: up to 480px */
+  @media (max-width: 480px) {
+    .scene { padding: 48px 20px; }
+    .device-showcase { gap: 8px; }
+    .social-icons { gap: 10px; }
+    .cta-btn { padding: 15px 28px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Loading Screen -->
+<div id="loader">
+  <div class="loader-ring"></div>
+  <div class="loader-text">Loading your story</div>
+</div>
+
+<!-- Progress Bar -->
+<div class="progress-bar" id="progressBar" style="width:0%"></div>
+
+<!-- Brand Logo Top Left -->
+<div class="brand-logo-fixed">✦ webb.ino</div>
+
+<!-- Floating Tag -->
+<div class="floating-scene-tag" id="sceneTag">Opening</div>
+
+<div class="reel">
+
+  <!-- SCENE 1: HOOK -->
+  <section class="scene scene-1" id="s1">
+    <div class="scene-1-bg"></div>
+    <div class="scene-1-noise"></div>
+    <div class="pov-badge">⚠ POV</div>
+    <h1 class="hook-text">
+      Your business is losing customers<br>
+      <span>without a website.</span>
+    </h1>
+    <p class="hook-sub">every day without one = money left on the table</p>
+    <div class="scroll-indicator">
+      <span>scroll</span>
+      <div class="scroll-arrow"></div>
+    </div>
+  </section>
+
+  <div class="scene-divider"></div>
+
+  <!-- SCENE 2: OLD BORING PROFILE -->
+  <section class="scene scene-2" id="s2">
+    <div class="section-label reveal">Before — the old way</div>
+    <div class="old-profile-card reveal">
+      <div class="old-badge">🔴 No Website</div>
+      <div class="old-profile-top">
+        <div class="old-avatar" style="padding:0; overflow:hidden; background:#000;">
+          <img src="WhatsApp Image 2026-05-11 at 4.29.18 PM.jpeg" alt="Profile" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; filter:brightness(0);">
+        </div>
+        <div>
+          <div class="old-name">Aarav &amp; Co.</div>
+          <div class="old-handle">No online presence</div>
+        </div>
+      </div>
+      <div class="old-bio">We sell groceries and daily essentials. Visit our shop at MG Road. Open Mon–Sat 9am–8pm. Call 98765-XXXXX.</div>
+      <div class="old-stats">
+        <div class="old-stat">
+          <div class="old-stat-num">43</div>
+          <div class="old-stat-label">Reviews</div>
+        </div>
+        <div class="old-stat">
+          <div class="old-stat-num">2.1k</div>
+          <div class="old-stat-label">Views/mo</div>
+        </div>
+        <div class="old-stat">
+          <div class="old-stat-num">0</div>
+          <div class="old-stat-label">Bookings</div>
+        </div>
+      </div>
+      <div class="old-cta">No booking available — Call only</div>
+    </div>
+    <div class="loss-indicators reveal">
+      <div class="loss-bar">
+        <div class="loss-label">Trust Score</div>
+        <div class="loss-track"><div class="loss-fill" style="width:18%"></div></div>
+        <div class="loss-pct">18%</div>
+      </div>
+      <div class="loss-bar">
+        <div class="loss-label">Visibility</div>
+        <div class="loss-track"><div class="loss-fill" style="width:22%"></div></div>
+        <div class="loss-pct">22%</div>
+      </div>
+      <div class="loss-bar">
+        <div class="loss-label">Conversions</div>
+        <div class="loss-track"><div class="loss-fill" style="width:8%"></div></div>
+        <div class="loss-pct">8%</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="scene-divider"></div>
+
+  <!-- SCENE 3: CUSTOMERS LEAVING -->
+  <section class="scene scene-3" id="s3">
+    <div class="section-label reveal">What's happening right now…</div>
+    <div class="customers-wrap">
+      <div class="customer-row">
+        <div class="c-avatar" style="background:#1a1a1a;">👩</div>
+        <div class="c-info">
+          <div class="c-name">Priya M.</div>
+          <div class="c-action">Searched "salon near me"</div>
+        </div>
+        <div class="c-gone">→ Left</div>
+      </div>
+      <div class="customer-row">
+        <div class="c-avatar" style="background:#1a1a1a;">👨</div>
+        <div class="c-info">
+          <div class="c-name">Arjun K.</div>
+          <div class="c-action">Couldn't find your menu</div>
+        </div>
+        <div class="c-gone">→ Left</div>
+      </div>
+      <div class="customer-row">
+        <div class="c-avatar" style="background:#1a1a1a;">👩‍💼</div>
+        <div class="c-info">
+          <div class="c-name">Sneha R.</div>
+          <div class="c-action">No online booking available</div>
+        </div>
+        <div class="c-gone">→ Left</div>
+      </div>
+      <div class="customer-row">
+        <div class="c-avatar" style="background:#1a1a1a;">🧑</div>
+        <div class="c-info">
+          <div class="c-name">Vikram S.</div>
+          <div class="c-action">Chose competitor with website</div>
+        </div>
+        <div class="c-gone">→ Left</div>
+      </div>
+    </div>
+    <div class="loss-total reveal">₹1,20,000</div>
+    <div class="loss-total-label reveal">estimated annual revenue loss</div>
+  </section>
+
+  <div class="scene-divider"></div>
+
+  <!-- SCENE 4: TRANSFORMATION TRANSITION -->
+  <section class="scene scene-4" id="s4">
+    <div class="transition-text reveal">But what if…</div>
+    <div class="transition-ring reveal">
+      <div class="transition-icon">✦</div>
+    </div>
+    <div class="transition-headline reveal">
+      You had a website that<br>sells while you sleep?
+    </div>
+  </section>
+
+  <div class="scene-divider"></div>
+
+  <!-- SCENE 5: PREMIUM WEBSITE PREVIEW -->
+  <section class="scene scene-5" id="s5">
+    <div class="section-label reveal">After — premium digital presence</div>
+    <div class="phone-mockup reveal">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+        <div class="phone-hero">
+          <div style="width:36px; height:36px; border-radius:50%; overflow:hidden; margin:0 auto 6px; border:1.5px solid var(--gold); position:relative; z-index:1;">
+            <img src="WhatsApp Image 2026-05-11 at 4.29.18 PM.jpeg" alt="Aarav &amp; Co." style="width:100%; height:100%; object-fit:cover; display:block;">
+          </div>
+          <div class="phone-logo">Aarav &amp; Co. ✦</div>
+          <div class="phone-tagline">Premium · Trusted · Local</div>
+          <button class="phone-cta-btn">Book Now →</button>
+        </div>
+        <div class="phone-services">
+          <div class="phone-services-title">Our Services</div>
+          <div class="phone-service-grid">
+            <div class="phone-service-item">
+              <div class="phone-service-icon">🛒</div>
+              <div class="phone-service-name">Groceries</div>
+            </div>
+            <div class="phone-service-item">
+              <div class="phone-service-icon">🚚</div>
+              <div class="phone-service-name">Delivery</div>
+            </div>
+            <div class="phone-service-item">
+              <div class="phone-service-icon">💳</div>
+              <div class="phone-service-name">Easy Pay</div>
+            </div>
+            <div class="phone-service-item">
+              <div class="phone-service-icon">⭐</div>
+              <div class="phone-service-name">Reviews</div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-bottom-nav">
+          <div class="phone-nav-item active"><div class="phone-nav-icon">🏠</div>Home</div>
+          <div class="phone-nav-item"><div class="phone-nav-icon">📋</div>Menu</div>
+          <div class="phone-nav-item"><div class="phone-nav-icon">📅</div>Book</div>
+          <div class="phone-nav-item"><div class="phone-nav-icon">📞</div>Contact</div>
+        </div>
+      </div>
+    </div>
+    <div class="feature-tags reveal">
+      <div class="ftag">✦ SEO Ready</div>
+      <div class="ftag">✦ Fast Load</div>
+      <div class="ftag">✦ Book Online</div>
+      <div class="ftag">✦ WhatsApp CTA</div>
+      <div class="ftag">✦ Google Maps</div>
+      <div class="ftag">✦ Dark Luxury</div>
+    </div>
+  </section>
+
+  <div class="scene-divider"></div>
+
+  <!-- SCENE 6: BOOKINGS INCREASING -->
+  <section class="scene scene-6" id="s6">
+    <div class="bookings-header reveal">
+      <h2>Bookings <span>exploding</span><br>from day one.</h2>
+    </div>
+    <div class="metric-cards">
+      <div class="metric-card reveal">
+        <div class="metric-icon">📅</div>
+        <div class="metric-info">
+          <div class="metric-label">Monthly Bookings</div>
+          <div class="metric-value">+340%</div>
+          <div class="metric-change">↑ vs last month</div>
+        </div>
+        <div class="metric-bar-wrap">
+          <div class="mini-bars">
+            <div class="mini-bar" style="height:20%; animation-delay:0.1s"></div>
+            <div class="mini-bar" style="height:35%; animation-delay:0.2s"></div>
+            <div class="mini-bar" style="height:55%; animation-delay:0.3s"></div>
+            <div class="mini-bar" style="height:70%; animation-delay:0.4s"></div>
+            <div class="mini-bar" style="height:100%; animation-delay:0.5s"></div>
+          </div>
+        </div>
+      </div>
+      <div class="metric-card reveal">
+        <div class="metric-icon">👁️</div>
+        <div class="metric-info">
+          <div class="metric-label">Monthly Visitors</div>
+          <div class="metric-value gold">12.4k</div>
+          <div class="metric-change" style="color:var(--gold)">↑ organic traffic</div>
+        </div>
+        <div class="metric-bar-wrap">
+          <div class="mini-bars">
+            <div class="mini-bar" style="height:15%; animation-delay:0.1s"></div>
+            <div class="mini-bar" style="height:40%; animation-delay:0.2s"></div>
+            <div class="mini-bar" style="height:60%; animation-delay:0.3s"></div>
+            <div class="mini-bar" style="height:80%; animation-delay:0.4s"></div>
+            <div class="mini-bar" style="height:95%; animation-delay:0.5s"></div>
+          </div>
+        </div>
+      </div>
+      <div class="metric-card reveal">
+        <div class="metric-icon">💰</div>
+        <div class="metric-info">
+          <div class="metric-label">Revenue Growth</div>
+          <div class="metric-value">+₹80k</div>
+          <div class="metric-change">↑ in 60 days</div>
+        </div>
+        <div class="metric-bar-wrap">
+          <div class="mini-bars">
+            <div class="mini-bar" style="height:10%; animation-delay:0.1s"></div>
+            <div class="mini-bar" style="height:30%; animation-delay:0.2s"></div>
+            <div class="mini-bar" style="height:50%; animation-delay:0.3s"></div>
+            <div class="mini-bar" style="height:75%; animation-delay:0.4s"></div>
+            <div class="mini-bar" style="height:100%; animation-delay:0.5s"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="scene-divider"></div>
+
+  <!-- SCENE 7: SOCIAL PROOF -->
+  <section class="scene scene-7" id="s7">
+    <div class="social-proof-title reveal">Real clients.<br><span>Real results.</span></div>
+    <div class="testimonial-stack">
+      <div class="testimonial-card reveal">
+        <div class="t-top">
+          <div class="t-avatar" style="background:#1a1a1a;">👩</div>
+          <div>
+            <div class="t-name">Anita Sharma</div>
+            <div class="t-handle">Beauty Salon, Bhopal</div>
+          </div>
+        </div>
+        <div class="t-stars">★★★★★</div>
+        <div class="t-text">"Got 3x more bookings in the first week. My clients say the website looks more professional than salons in big cities!"</div>
+        <div class="t-verified">✦ Verified Client</div>
+      </div>
+      <div class="testimonial-card reveal">
+        <div class="t-top">
+          <div class="t-avatar" style="background:#1a1a1a;">👨‍🍳</div>
+          <div>
+            <div class="t-name">Rajesh Kumar</div>
+            <div class="t-handle">Restaurant Owner, Indore</div>
+          </div>
+        </div>
+        <div class="t-stars">★★★★★</div>
+        <div class="t-text">"Our online orders doubled in the second month. The website pays for itself every single week now."</div>
+        <div class="t-verified">✦ Verified Client</div>
+      </div>
+      <div class="testimonial-card reveal">
+        <div class="t-top">
+          <div class="t-avatar" style="background:#1a1a1a;">👩‍💼</div>
+          <div>
+            <div class="t-name">Priya Mehta</div>
+            <div class="t-handle">Boutique, Jabalpur</div>
+          </div>
+        </div>
+        <div class="t-stars">★★★★★</div>
+        <div class="t-text">"People from other cities are finding my boutique online now. I never imagined this would happen for my small shop."</div>
+        <div class="t-verified">✦ Verified Client</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="scene-divider"></div>
+
+  <!-- SCENE 8: MOBILE RESPONSIVE -->
+  <section class="scene scene-8" id="s8">
+    <div class="responsive-title reveal">Works everywhere.</div>
+    <div class="responsive-sub reveal">Mobile · Tablet · Desktop</div>
+    <div class="device-showcase reveal">
+      <div class="device">
+        <div class="device-frame mobile">
+          <div class="device-inner">
+            <div class="d-header"></div>
+            <div class="d-content">
+              <div class="d-line gold"></div>
+              <div class="d-line"></div>
+              <div class="d-line short"></div>
+              <div class="d-btn"></div>
+            </div>
+          </div>
+        </div>
+        <div class="device-label">Mobile</div>
+      </div>
+      <div class="device">
+        <div class="device-frame tablet">
+          <div class="device-inner">
+            <div class="d-header"></div>
+            <div class="d-content">
+              <div class="d-line gold"></div>
+              <div class="d-line"></div>
+              <div class="d-line"></div>
+              <div class="d-line short"></div>
+              <div class="d-btn"></div>
+            </div>
+          </div>
+        </div>
+        <div class="device-label">Tablet</div>
+      </div>
+      <div class="device">
+        <div class="device-frame desktop">
+          <div class="device-inner">
+            <div class="d-header"></div>
+            <div class="d-content">
+              <div class="d-line gold"></div>
+              <div class="d-line"></div>
+              <div class="d-line short"></div>
+              <div class="d-btn"></div>
+            </div>
+          </div>
+        </div>
+        <div class="device-label">Desktop</div>
+      </div>
+    </div>
+    <div class="responsive-check reveal">
+      <span>✓</span> Fully responsive &nbsp;·&nbsp; <span>✓</span> Lightning fast &nbsp;·&nbsp; <span>✓</span> SEO optimized
+    </div>
+  </section>
+
+  <div class="scene-divider"></div>
+
+  <!-- SCENE 9: FINAL CTA -->
+  <section class="scene scene-9" id="s9">
+    <div class="final-bg-orb"></div>
+    <div class="final-bg-orb-2"></div>
+    <div class="final-eyebrow reveal">The choice is yours</div>
+    <h2 class="final-headline reveal">
+      Your business<br>deserves <span>better.</span>
+    </h2>
+    <p class="final-sub reveal">
+      Join 50+ local businesses that<br>
+      transformed their presence online.
+    </p>
+    <button class="cta-btn reveal" onclick="openDMPanel()">
+      ✦ DM to get your website
+    </button>
+    <div class="cta-note reveal">Free consultation · Delivered in 7 days</div>
+    <div class="final-divider"></div>
+    <div class="social-icons reveal">
+      <div class="social-icon">📸</div>
+      <div class="social-icon">💬</div>
+      <div class="social-icon">📱</div>
+    </div>
+    <div class="brand-footer reveal">✦ webb.ino</div>
+  </section>
+
+</div>
+
+<!-- ══════════════════════════════════════════
+     DM PANEL OVERLAY
+══════════════════════════════════════════ -->
+<div id="dmOverlay" class="dm-overlay" onclick="closeDMPanel(event)">
+  <div class="dm-panel" id="dmPanel">
+
+    <!-- Close -->
+    <button class="dm-close" onclick="closeDMPanel()">✕</button>
+
+    <!-- Header -->
+    <div class="dm-header">
+      <div class="dm-header-ring">✦</div>
+      <h3 class="dm-title">Send Us Your Requirements</h3>
+      <p class="dm-subtitle">Choose how you'd like to reach us — we respond within 2 hours.</p>
+    </div>
+
+    <!-- Divider -->
+    <div class="dm-divider"></div>
+
+    <!-- What to include info -->
+    <div class="dm-info-box">
+      <div class="dm-info-title">📋 What to mention in your message</div>
+      <ul class="dm-info-list">
+        <li>🏪 Your business name &amp; type (salon, restaurant, boutique…)</li>
+        <li>🎯 What you want the website to do (bookings, menu, portfolio…)</li>
+        <li>🌈 Any color preference or reference websites you like</li>
+        <li>📞 Your contact number for a quick call</li>
+        <li>⚡ Your deadline (we deliver in 7 days!)</li>
+      </ul>
+    </div>
+
+    <!-- Channel Buttons -->
+    <div class="dm-channels">
+
+      <!-- EMAIL -->
+      <a class="dm-channel-card dm-email"
+         href="mailto:webbino0408@gmail.com?subject=Website%20Enquiry&body=Hi!%20I%20want%20a%20website%20for%20my%20business.%0A%0ABusiness%20Name%3A%20%0ABusiness%20Type%3A%20%0AWhat%20I%20need%3A%20%0AColor%20preference%3A%20%0AContact%20number%3A%20%0ADeadline%3A%20"
+         target="_blank">
+        <div class="dm-channel-icon">✉️</div>
+        <div class="dm-channel-info">
+          <div class="dm-channel-name">Send via Email</div>
+          <div class="dm-channel-desc">Opens with a pre-filled template — just fill &amp; send</div>
+        </div>
+        <div class="dm-channel-arrow">→</div>
+      </a>
+
+      <!-- INSTAGRAM -->
+      <a class="dm-channel-card dm-insta"
+         href="https://instagram.com/webb.ino"
+         target="_blank">
+        <div class="dm-channel-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="2" width="20" height="20" rx="5" stroke="url(#ig)" stroke-width="1.8"/>
+            <circle cx="12" cy="12" r="4.5" stroke="url(#ig)" stroke-width="1.8"/>
+            <circle cx="17.5" cy="6.5" r="1" fill="url(#ig)"/>
+            <defs>
+              <linearGradient id="ig" x1="2" y1="22" x2="22" y2="2" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#f09433"/>
+                <stop offset="25%" stop-color="#e6683c"/>
+                <stop offset="50%" stop-color="#dc2743"/>
+                <stop offset="75%" stop-color="#cc2366"/>
+                <stop offset="100%" stop-color="#bc1888"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="dm-channel-info">
+          <div class="dm-channel-name">DM on Instagram</div>
+          <div class="dm-channel-desc">Message us directly on Instagram — quick &amp; easy</div>
+        </div>
+        <div class="dm-channel-arrow">→</div>
+      </a>
+
+    </div>
+
+    <p class="dm-footer-note">🔒 Your details are private and never shared.</p>
+  </div>
+</div>
+
+<style>
+/* ── DM OVERLAY ── */
+.dm-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(8px);
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; visibility: hidden;
+  transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+.dm-overlay.open { opacity: 1; visibility: visible; }
+
+/* ── DM PANEL (bottom sheet) ── */
+.dm-panel {
+  width: 100%; max-width: 420px;
+  background: #0d0d0d;
+  border: 1px solid rgba(201,168,76,0.18);
+  border-bottom: none;
+  border-radius: 24px 24px 0 0;
+  padding: 32px 24px 36px;
+  position: relative;
+  transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+.dm-overlay.open .dm-panel { transform: translateY(0); }
+
+/* drag handle */
+.dm-panel::before {
+  content: '';
+  display: block;
+  width: 40px; height: 4px;
+  background: rgba(201,168,76,0.25);
+  border-radius: 2px;
+  margin: 0 auto 24px;
+}
+
+/* close */
+.dm-close {
+  position: absolute; top: 16px; right: 20px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid #222;
+  color: #666; font-size: 13px;
+  width: 28px; height: 28px;
+  border-radius: 50%; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: color 0.2s, border-color 0.2s;
+}
+.dm-close:hover { color: var(--gold); border-color: var(--gold); }
+
+/* header */
+.dm-header { text-align: center; margin-bottom: 20px; }
+.dm-header-ring {
+  font-size: 20px; color: var(--gold);
+  margin-bottom: 10px;
+  animation: goldShimmer 3s ease infinite;
+  display: block;
+}
+.dm-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px; font-weight: 900;
+  color: var(--white); margin-bottom: 6px;
+}
+.dm-subtitle { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+/* divider */
+.dm-divider {
+  width: 100%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.2), transparent);
+  margin: 16px 0;
+}
+
+/* info box */
+.dm-info-box {
+  background: rgba(201,168,76,0.05);
+  border: 1px solid rgba(201,168,76,0.1);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+.dm-info-title {
+  font-size: 11px; font-weight: 700;
+  color: var(--gold); letter-spacing: 0.5px;
+  margin-bottom: 10px; text-transform: uppercase;
+}
+.dm-info-list {
+  list-style: none; padding: 0; margin: 0;
+  display: flex; flex-direction: column; gap: 7px;
+}
+.dm-info-list li {
+  font-size: 11.5px; color: #aaa; line-height: 1.4;
+}
+
+/* channel cards */
+.dm-channels { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+.dm-channel-card {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  cursor: pointer;
+}
+.dm-channel-card:hover { transform: translateY(-2px); }
+.dm-channel-card:active { transform: scale(0.98); }
+
+.dm-email {
+  background: rgba(201,168,76,0.07);
+  border-color: rgba(201,168,76,0.2);
+}
+.dm-email:hover {
+  border-color: rgba(201,168,76,0.5);
+  box-shadow: 0 0 20px rgba(201,168,76,0.12);
+}
+
+.dm-insta {
+  background: rgba(220,39,67,0.06);
+  border-color: rgba(220,39,67,0.15);
+}
+.dm-insta:hover {
+  border-color: rgba(220,39,67,0.4);
+  box-shadow: 0 0 20px rgba(220,39,67,0.1);
+}
+
+.dm-channel-icon { font-size: 22px; flex-shrink: 0; line-height: 1; }
+.dm-channel-info { flex: 1; }
+.dm-channel-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px; font-weight: 700;
+  color: var(--white); margin-bottom: 3px;
+}
+.dm-channel-desc { font-size: 10.5px; color: var(--muted); line-height: 1.4; }
+.dm-channel-arrow { color: var(--muted); font-size: 16px; flex-shrink: 0; }
+
+/* footer */
+.dm-footer-note { font-size: 10px; color: #444; text-align: center; letter-spacing: 0.3px; }
+</style>
+
+<script>
+  // DM PANEL
+  function openDMPanel() {
+    document.getElementById('dmOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeDMPanel(e) {
+    // close only if clicking the overlay backdrop (not the panel itself)
+    if (e && e.target !== document.getElementById('dmOverlay') && e.type !== 'click') return;
+    if (e && e.currentTarget === document.getElementById('dmPanel')) return;
+    document.getElementById('dmOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  // Close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeDMPanel();
+  });
+  // Stop clicks inside panel from bubbling to overlay
+  document.getElementById('dmPanel').addEventListener('click', (e) => e.stopPropagation());
+
+  // LOADER
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      document.getElementById('loader').classList.add('hidden');
+    }, 1800);
+  });
+
+  // SCROLL PROGRESS
+  const progressBar = document.getElementById('progressBar');
+  window.addEventListener('scroll', () => {
+    const scrolled = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+    progressBar.style.width = scrolled + '%';
+  });
+
+  // SCENE TAGS
+  const sceneTag = document.getElementById('sceneTag');
+  const scenes = [
+    { el: document.getElementById('s1'), label: 'The Hook' },
+    { el: document.getElementById('s2'), label: 'The Problem' },
+    { el: document.getElementById('s3'), label: 'The Loss' },
+    { el: document.getElementById('s4'), label: 'The Shift' },
+    { el: document.getElementById('s5'), label: 'The Solution' },
+    { el: document.getElementById('s6'), label: 'The Growth' },
+    { el: document.getElementById('s7'), label: 'Social Proof' },
+    { el: document.getElementById('s8'), label: 'All Devices' },
+    { el: document.getElementById('s9'), label: 'Your Move' },
+  ];
+
+  // INTERSECTION OBSERVER for reveals + scene tag
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  const sceneObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const found = scenes.find(s => s.el === entry.target);
+        if (found) sceneTag.textContent = found.label;
+      }
+    });
+  }, { threshold: 0.4 });
+
+  scenes.forEach(s => sceneObserver.observe(s.el));
+
+  // Stagger loss bars on scene 2 enter
+  const lossObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.querySelectorAll('.loss-fill').forEach((bar, i) => {
+          bar.style.animationDelay = (i * 0.2 + 0.5) + 's';
+        });
+      }
+    });
+  }, { threshold: 0.3 });
+  const s2 = document.getElementById('s2');
+  if (s2) lossObserver.observe(s2);
+
+  // Mini bars stagger
+  document.querySelectorAll('.mini-bar').forEach((bar, i) => {
+    bar.style.animationDelay = (i * 0.1) + 's';
+  });
+
+  // Smooth parallax on hero text
+  const hookText = document.querySelector('.hook-text');
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY;
+    if (hookText && y < window.innerHeight) {
+      hookText.style.transform = `translateY(${y * 0.15}px)`;
+    }
+  });
+</script>
+</body>
+</html>
